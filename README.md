@@ -17,10 +17,14 @@ Learning the function using GPRegression with a squared exponential covariance f
 Unless we have a lot of samples,we would be forced to give up precision on the slowly varying part of the function.
 
 DKL solves the problem quite nicely:
-<p align="center">
-  DKL Prediction
-  <img src="ex1_1.png" width="350"/> 
+<figure align="center">
   
-  z(x) function learned by neural network.
+  <img src="ex1_1.png" width="350"/> 
+  <figcaption>DKL Prediction</figcaption>
+ 
+  
+</figure>
+<figure align="center">
   <img src="ex1_2.png" width="350"/> 
-</p>
+  <figcaption> z(x) function learned by neural network.</figcaption>
+</figure>
