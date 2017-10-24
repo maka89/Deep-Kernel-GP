@@ -6,6 +6,21 @@ The examples also use matplotlib and scikit-learn
 
 ## Introduction
 
+
+
+Instead of learning a mapping X-->Y with a neural network or GP regression, we learn the following mappings:
+X-->Z-->Y where the first step is performed by a neural net and the second by a gp regression algorithm.
+
+This way we are able to use GP Regression to learn functions on data where the the assumption that y(x) is a gaussian surface with covariance specified by one of the standard covariance fucntions, might not be a fair assumption.
+For instance we can learn functions with image pixels as inputs or functions with length scales that varies with the input.
+
+
+The parameters of the neural net are trained maximizing the log marginal likelihood implied by z(x_train) and y_train.
+
+[Deep Kernel Learning - A.G. Wilson ++ ](https://arxiv.org/pdf/1511.02222.pdf)
+[Using Deep Belief Nets to Learn Covariance Kernels
+for Gaussian Processes - G. Hinton ++](http://www.cs.toronto.edu/~fritz/absps/dbngp.pdf)
+
 ## Examples
 Basic usage is done with a Scikit ish API:
 
