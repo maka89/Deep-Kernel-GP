@@ -15,21 +15,21 @@ x_test=x_test.reshape(-1,28*28)
 
 
 layers=[]
-#layers.append(Dense(64,activation='relu'))
-#layers.append(Dropout(0.9))
 layers.append(Dense(64,activation='relu'))
-#layers.append(Dropout(0.9))
-layers.append(Dense(5))
+layers.append(Dense(64,activation='relu'))
+
+layers.append(Dense(10))
 layers.append(CovMat(alpha=0.5,var=1.0,kernel='rbf'))
-opt=Adam(1e-2)
-
-gp=NNRegressor(layers,opt=opt,batch_size=200,maxiter=1000,gp=True,verbose=True)
-gp.fit(x_train,y_train)
-#gp.fit(x_train,y_train,batch_size=500,maxiter=500)
-
-
-n_train = 400
+opt=Adam(1e-3)
+n_train = 5000
 n_test = 10000
+gp=NNRegressor(layers,opt=opt,batch_size=1000,maxiter=100,gp=True,verbose=True)
+gp.fit(x_train,y_train)
+
+gp.fit(x_train,y_train,batch_size=5000,maxiter=5)
+
+
+#Can extract mapping z(x) and hyperparams for use in other learning algorithm
 alph=gp.layers[-1].s_alpha
 var=gp.layers[-1].var
 A=gp.fast_forward(x_train[0:n_train])
@@ -40,11 +40,11 @@ gp1.fit(A,y_train[0:n_train])
 
 
 A=gp.fast_forward(x_test[0:n_test])
-print("Predicting")
 yp,std=gp1.predict(A,return_std=True)
-yp2 = gp2.predict(A)
 print("GP Regression:")
 print(np.average(np.argmax(yp,1)==np.argmax(y_test[0:n_test],1)))
+
+
 
 
 ass=np.argsort(std)

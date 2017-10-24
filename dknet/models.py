@@ -108,10 +108,15 @@ class NNRegressor(CoreNN):
 			self.opt=Adam()
 		if not self.fitted:
 			self.first_run(X[0:2],Y[0:2])
+			
+		
 		a=self.opt.fit(X,Y,self,batch_size=self.batch_size,maxiter=self.maxiter,verbose=self.verbose)
+
 		self.fitted=True
+		
 		self.y=Y
 		self.x=X
+
 		return a
 	def predict(self,X):
 		A=X
@@ -120,8 +125,8 @@ class NNRegressor(CoreNN):
 			A2=self.layers[i].predict(A2)
 			A=self.layers[i].predict(A)
 			
-		K=self.layers[-1].forward(A2)
-		self.L_ = cholesky(K, lower=True)
+		self.K=self.layers[-1].forward(A2)
+		self.L_ = cholesky(self.K, lower=True)
 		
 		L_inv = solve_triangular(self.L_.T,numpy.eye(self.L_.shape[0]))
 		self.K_inv = L_inv.dot(L_inv.T)
@@ -136,15 +141,16 @@ class NNRegressor(CoreNN):
 		d2=0.0
 		for i in range(0,A.shape[1]):
 			d1+=(A[:,i].reshape(-1,1)-A[:,i].reshape(1,-1))**2
-			d2+=(A[:,i].reshape(-1,1)-self.A[:,i].reshape(1,-1))**2
-		K2=self.layers[-1].var*numpy.exp(-0.5*d1)+numpy.identity(A.shape[0])*self.layers[-1].s_alpha
+			d2+=(A[:,i].reshape(-1,1)-A2[:,i].reshape(1,-1))**2
+		K2=self.layers[-1].var*numpy.exp(-0.5*d1)+numpy.identity(A.shape[0])*(self.layers[-1].s_alpha+1e-8)
 		K3=self.layers[-1].var*numpy.exp(-0.5*d2)
+		
 		
 		preds=numpy.zeros((X.shape[0],self.y.shape[1]))
 		for i in range(0,self.alpha_.shape[1]):
 			preds[:,i]=numpy.dot(K3,self.alpha_[:,i].reshape(-1,1))[:,0]
 		
-		return preds, numpy.sqrt(numpy.diag(K2-numpy.dot(K3,numpy.dot(self.K_inv,K3.T))))
+		return preds, numpy.sqrt(numpy.diagonal(K2-numpy.dot(K3,numpy.dot(self.K_inv,K3.T))))
 		
 		
 	def update(self,X,Y):
