@@ -18,6 +18,7 @@ Unless we have a lot of samples,we would be forced to give up precision on the s
 
 DKL solves the problem quite nicely:
 <p align="center">
-  <img src="ex1_1.png" width="350"/>
-  <img src="ex1_2.png" width="350"/>
+  <img src="ex1_1.png" width="350"/> DKL Prediction
+  
+  <img src="ex1_2.png" width="350"/> z(x) function learned by neural network. Scales approx. like (x+0.5)**4 in the range x=(-0.5,0.5)
 </p>
