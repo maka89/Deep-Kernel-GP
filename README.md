@@ -18,6 +18,7 @@ For instance we can learn functions with image pixels as inputs or functions wit
 The parameters of the neural net are trained maximizing the log marginal likelihood implied by z(x_train) and y_train.
 
 [Deep Kernel Learning - A.G. Wilson ++ ](https://arxiv.org/pdf/1511.02222.pdf)
+
 [Using Deep Belief Nets to Learn Covariance Kernels
 for Gaussian Processes - G. Hinton ++](http://www.cs.toronto.edu/~fritz/absps/dbngp.pdf)
 
@@ -73,7 +74,7 @@ We see that DKL solves the problem quite nicely, given the limited data. We also
 
 ### Prediction error on MNIST
 
-The example_mnist.py script tries takes a crack at the MNIST classification problem, to see if we are able to predict when we are making an error.
+The example_mnist.py script tries takes a crack at the classic MNIST classification problem (even though we currently are using a regression algorihm), to see if we are able to predict when we are making an error.
 Since no large-scale GP algorithms are implemented yet, we have to limit training data. We use mini-batch learning on the log marginal likelihood to find z(x). 
 Then fit a GP model on 5000 MNIST training samples. 
 
