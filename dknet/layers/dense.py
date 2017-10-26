@@ -3,6 +3,19 @@ from numpy import unravel_index
 from .activation import Activation
 from .layer import Layer
 
+
+class Parametrize(Layer):
+	def __init__(self,type="oscillate",w=1.0):
+		self.trainable = False
+		self.w=w
+		if type=="oscillate":
+			self.forward,self.backward=self.forward_osc,self.backward_osc
+	def forward_osc(self,X):
+		self.inp=X
+		self.out=numpy.concatenate([numpy.sin(self.w*X),numpy.cos(self.w*X)],1)
+		return self.out
+	def backward_osc(self,err):
+		return self.w*err[:,[0]]*numpy.cos(self.w*self.inp) -self.w*err[:,[1]]*numpy.sin(self.w*self.inp)
 	
 class Dense(Layer):
 	def __init__(self,n_out,activation=None):
