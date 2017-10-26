@@ -12,6 +12,9 @@ class Dropout(Layer):
 		return self.out
 	
 	def predict(self,X):
+		self.inp=X
+		self.out=X
+		self.mask=numpy.ones_like(X)
 		return X
 	
 	def backward(self,err):

@@ -110,7 +110,7 @@ def grad_check(model,X,Y,check_n_params=50):
 	
 	ll=[]
 	for n in range(0,check_n_params):
-		model.forward(X)
+		model.forward(X,gc=True)
 		model.backward(Y)
 		i=numpy.random.randint(len(model.layers))
 		while not model.layers[i].trainable:
@@ -131,12 +131,12 @@ def grad_check(model,X,Y,check_n_params=50):
 		b=numpy.copy(model.layers[i].b)
 		
 		model.layers[i].W.itemset(nums,W.item(nums)+eps)
-		model.forward(X)
+		model.forward(X,gc=True)
 		model.backward(Y)
 		jp=model.j
 		
 		model.layers[i].W.itemset(nums,W.item(nums)-eps)
-		model.forward(X)
+		model.forward(X,gc=True)
 		model.backward(Y)
 		jm=model.j
 		model.layers[i].W.itemset(nums,W.item(nums))
@@ -144,11 +144,11 @@ def grad_check(model,X,Y,check_n_params=50):
 		dW2=0.5*(jp-jm)/eps
 		
 		model.layers[i].b.itemset(bnum,b.item(bnum)+eps)
-		model.forward(X)
+		model.forward(X,gc=True)
 		model.backward(Y)
 		jp=model.j
 		model.layers[i].b.itemset(bnum,b.item(bnum)-eps)
-		model.forward(X)
+		model.forward(X,gc=True)
 		model.backward(Y)
 		jm=model.j
 		

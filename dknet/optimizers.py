@@ -143,18 +143,6 @@ class Adam(Optimizer):
 		self.m2=numpy.zeros_like(self.weights_as_arr())		
 		self.t=0
 		
-	def get_covfn(self,data,nn):
-		covfn=numpy.zeros_like(data)
-		std=numpy.std(data)
-		mu=numpy.mean(data)
-		covfn=(covfn-mu)/std
-		n=numpy.zeros_like(data)
-		for i in range(0,nn):
-			for j in range(0,nn):
-				jj=numpy.abs(i-j)
-				covfn[jj]=(n[jj]*covfn[jj]+data[i]*data[j])/(n[jj]+1)
-		#covfn/=covfn[0]
-		return covfn
 	def fit(self,X,Y,model,batch_size=16,maxiter=100,verbose=True):
 		self.model=model
 		self.n_iter=0
@@ -317,5 +305,71 @@ class SDProp(Optimizer):
 					brflag=True
 					break
 			if brflag:
+				break
+		return numpy.array(self.save)
+
+from sklearn.cluster import KMeans
+class Adam2(Optimizer):
+	def __init__(self,learning_rate=1e-3,beta_1=0.9,beta_2=0.999,epsilon=1e-8):
+		super()
+		self.learning_rate=learning_rate
+		self.beta_1=beta_1
+		self.beta_2=beta_2
+		self.epsilon=1e-8
+		self.first_run=True
+	def reset(self):
+		self.init_moments()
+	def init_moments(self):	
+		self.m1=numpy.zeros_like(self.weights_as_arr())
+		self.m2=numpy.zeros_like(self.weights_as_arr())		
+		self.t=0
+	def fit(self,X,Y,model,batch_size=16,maxiter=100,verbose=True):
+		self.model=model
+		self.n_iter=0
+		if self.first_run:
+			self.init_moments()
+			self.first_run=False
+		brflag=False
+		self.save=[]
+		
+		
+
+		m=int(X.shape[0]/batch_size)
+		for i in range(0,100000):
+			A=self.model.fast_forward(X)
+			
+			jj=numpy.random.randint(A.shape[0])
+			
+			d=numpy.sum((A[[jj]]-A)**2,1)
+			ass=numpy.argsort(d)
+			
+			batch_x=X[ass[0:500]]
+			batch_y=Y[ass[0:500]]
+			
+			
+			self.model.update(batch_x,batch_y)
+			
+			x=self.weights_as_arr()
+			dw=self.weight_grads_as_arr()
+			
+			self.n_iter+=1
+			
+			#Adam
+			self.t+=1
+			
+			self.m1=self.beta_1*self.m1+(1.0-self.beta_1)*dw
+			self.m2=self.beta_2*self.m2+(1.0-self.beta_2)*(dw-self.m1)**2/numpy.abs(1.0/numpy.log(self.beta_1))
+			
+			m1a=self.m1/(1.0-self.beta_1**self.t)
+			m2a=self.m2/(1.0-self.beta_2**self.t)
+			
+			x=x-self.learning_rate*self.m1/numpy.sqrt(self.m2+1e-8)
+			self.update_params_from_1darr(x)
+			self.save.append(self.model.j)
+			if verbose:
+				strr= str(i)+" "+str(int(100.0*float(i)/m))+ " %. Loss: "+str(self.model.j) + " " +str(jj)
+				print(strr)
+			if self.n_iter>=maxiter:
+				brflag=True
 				break
 		return numpy.array(self.save)

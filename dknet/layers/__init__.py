@@ -9,7 +9,7 @@ from . import dropout
 
 
 from .pooling import MaxPool2D,AveragePool2D
-from .dense import Dense,RNNCell,CovMat,Parametrize
+from .dense import Dense,RNNCell,CovMat,Parametrize,Scale
 from .convolutional import Conv2D
 from .activation import Activation
 from .reshape import Flatten

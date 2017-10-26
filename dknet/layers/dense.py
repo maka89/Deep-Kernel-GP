@@ -17,6 +17,39 @@ class Parametrize(Layer):
 	def backward_osc(self,err):
 		return self.w*err[:,[0]]*numpy.cos(self.w*self.inp) -self.w*err[:,[1]]*numpy.sin(self.w*self.inp)
 	
+class Scale(Layer):
+	def __init__(self,fixed=False,init_vals=None):
+		self.fixed=fixed
+		self.trainable=True
+		self.init_vals=init_vals
+		self.activation=None
+		#assert( not ( (not fixed) and (init_vals is None) ) )
+	
+	def initialize_ws(self):
+		self.n_out = self.n_inp
+		if self.init_vals is None:
+			self.W=numpy.ones((1,self.n_inp))
+			self.init_vals=self.W
+		else:
+			#assert(len(init_vals)==self.n_inp or type)
+			self.W=numpy.ones((1,self.n_inp))*self.init_vals
+		self.b=numpy.zeros((1,self.n_inp))
+		self.dW=numpy.zeros_like(self.W)
+		self.db=numpy.zeros_like(self.b)
+		
+	def forward(self,X):
+		self.inp=X
+		self.out=self.init_vals*X
+		if not self.fixed:
+			self.out=self.W*X
+		
+		return self.out
+	def backward(self,err):
+		if not self.fixed:
+			self.dW=numpy.sum(err*self.inp,0).reshape(1,-1)
+			
+		return self.W*err
+
 class Dense(Layer):
 	def __init__(self,n_out,activation=None):
 		self.n_out=n_out
@@ -47,14 +80,44 @@ class CovMat(Layer):
 		self.var = var
 		self.activation=None
 		self.alpha_fixed=alpha_fixed
+		self.kernel=kernel
 		if kernel=='rbf':
 			self.forward,self.backward = self.forward_rbf,self.backward_rbf
+		elif kernel == 'dot':
+			self.forward,self.backward = self.forward_dot,self.backward_dot
+		self.predict=self.forward
 	def initialize_ws(self):
 		self.W=numpy.ones((1,2))*numpy.array([[numpy.log(self.s_alpha/(1.0-self.s_alpha)),numpy.sqrt(self.var)]])
 		self.b=numpy.zeros((1,1))
 		self.dW=numpy.zeros((1,2))
 		self.db=numpy.zeros((1,1))
 	
+	
+	def forward_dot(self,X):
+		self.inp=X
+		
+		#Dot product
+		self.s0=numpy.dot(X,X.T)
+		
+		#Add variance (or alpha0)
+		self.var=self.W[0,1]**2
+		self.s0 = self.s0+self.var
+		
+		#Add noise
+		self.s_alpha=1.0/(numpy.exp(-self.W[0,0])+1.0)
+		self.s=self.s0+numpy.identity(X.shape[0])*(self.s_alpha+1e-8)
+		
+		self.out=self.s
+		return self.out
+	def backward_dot(self,err):
+		if not self.alpha_fixed:
+			a_err=err*self.s_alpha*(1.0-self.s_alpha)
+			self.dW[0,0]=numpy.mean(numpy.diag(a_err))#*err.shape[0]
+			self.dW[0,1]=numpy.sum(err)*2*self.W[0,1]/err.shape[0]
+		
+		#Backpropagate through dot product:
+		err2=2.0*numpy.dot(err,self.inp)/err.shape[0]#/err.shape[0]
+		return err2
 	def forward_rbf(self,X):
 		self.inp=X
 		

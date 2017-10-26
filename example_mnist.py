@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from dknet import NNRegressor
-from dknet.layers import Dense,Conv2D,MaxPool2D,Flatten,Dropout,CovMat
-from dknet.optimizers import Adam,SciPyMin,SDProp
+from dknet.layers import Dense,Conv2D,MaxPool2D,Flatten,Dropout,CovMat,Scale
+from dknet.optimizers import Adam,SciPyMin,SDProp, Adam2
 from dknet.utils import load_mnist
 
 from sklearn.gaussian_process import GaussianProcessClassifier,GaussianProcessRegressor
@@ -15,31 +15,48 @@ x_test=x_test.reshape(-1,28*28)
 
 
 layers=[]
-layers.append(Dense(64,activation='relu'))
-layers.append(Dense(64,activation='relu'))
-
+layers.append(Dense(10,activation='tanh'))
 layers.append(Dense(10))
+#layers.append(Scale(fixed=False,init_vals=0.1))
 layers.append(CovMat(alpha=0.5,var=1.0,kernel='rbf'))
-opt=Adam(1e-3)
-n_train = 5000
+opt=SciPyMin('l-bfgs-b')
+n_train = 3000
 n_test = 10000
-gp=NNRegressor(layers,opt=opt,batch_size=1000,maxiter=100,gp=True,verbose=True)
+
+
+opt=Adam(1e-3)
+batch_size=500
+gp=NNRegressor(layers,opt=opt,batch_size=batch_size,maxiter=500,gp=True,verbose=True)
 gp.fit(x_train,y_train)
 
-gp.fit(x_train,y_train,batch_size=5000,maxiter=5)
 
 
 #Can extract mapping z(x) and hyperparams for use in other learning algorithm
 alph=gp.layers[-1].s_alpha
 var=gp.layers[-1].var
-A=gp.fast_forward(x_train[0:n_train])
+
+A_full=gp.fast_forward(x_train)
+
 
 kernel=ConstantKernel(var)*RBF(np.ones(1))+WhiteKernel(alph)
-gp1=GaussianProcessRegressor(kernel,optimizer=None)
-gp1.fit(A,y_train[0:n_train])
 
 
-A=gp.fast_forward(x_test[0:n_test])
+
+A_test=gp.fast_forward(x_test[0:n_test])
+yp=np.zeros(n_test)
+std=np.zeros(n_test)
+for i in range(0,n_test):
+	gp1=GaussianProcessRegressor(kernel,optimizer=None)
+	d=np.sum((A_full-A_test[[i],:])**2,1)
+	ass=np.argsort(d)
+	
+	gp1.fit(A_full[ass[0:500]],y_train[ass[0:500]])
+	mu,stdt=gp1.predict(A_test[[i]],return_std=True)
+	yp[i]=np.argmax(mu[0])
+	std[i]=stdt[0]
+	print(i,np.mean(yp[0:i]==np.argmax(y_test[0:i],1)))
+	
+	
 yp,std=gp1.predict(A,return_std=True)
 print("GP Regression:")
 print(np.average(np.argmax(yp,1)==np.argmax(y_test[0:n_test],1)))

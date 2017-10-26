@@ -17,10 +17,16 @@ class CoreNN:
 		self.cost=costfn
 		
 		
-	def forward(self,X):
+	def forward(self,X,gc=False):
+		
 		A=X
-		for i in range(0,len(self.layers)):
-			A=self.layers[i].forward(A)
+		if not gc:
+			for i in range(0,len(self.layers)):
+				A=self.layers[i].forward(A)
+		else:
+			for i in range(0,len(self.layers)):
+				A=self.layers[i].predict(A)
+
 		return A
 	
 	def backward(self,Y):
@@ -137,15 +143,18 @@ class NNRegressor(CoreNN):
 		K2=numpy.zeros((X.shape[0],X.shape[0]))
 		K3=numpy.zeros((X.shape[0],self.K.shape[0]))
 		
-		d1=0.0
-		d2=0.0
-		for i in range(0,A.shape[1]):
-			d1+=(A[:,i].reshape(-1,1)-A[:,i].reshape(1,-1))**2
-			d2+=(A[:,i].reshape(-1,1)-A2[:,i].reshape(1,-1))**2
-		K2=self.layers[-1].var*numpy.exp(-0.5*d1)+numpy.identity(A.shape[0])*(self.layers[-1].s_alpha+1e-8)
-		K3=self.layers[-1].var*numpy.exp(-0.5*d2)
-		
-		
+		if self.layers[-1].kernel=='rbf':
+			d1=0.0
+			d2=0.0
+			for i in range(0,A.shape[1]):
+				d1+=(A[:,i].reshape(-1,1)-A[:,i].reshape(1,-1))**2
+				d2+=(A[:,i].reshape(-1,1)-A2[:,i].reshape(1,-1))**2
+			K2=self.layers[-1].var*numpy.exp(-0.5*d1)+numpy.identity(A.shape[0])*(self.layers[-1].s_alpha+1e-8)
+			K3=self.layers[-1].var*numpy.exp(-0.5*d2)
+		elif self.layers[-1].kernel=='dot':
+			K2=numpy.dot(A,A.T)+numpy.identity(A.shape[0])*(self.layers[-1].s_alpha+1e-8) + self.layers[-1].var
+			K3=numpy.dot(A,A2.T) + self.layers[-1].var
+			
 		preds=numpy.zeros((X.shape[0],self.y.shape[1]))
 		for i in range(0,self.alpha_.shape[1]):
 			preds[:,i]=numpy.dot(K3,self.alpha_[:,i].reshape(-1,1))[:,0]
