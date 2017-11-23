@@ -41,7 +41,7 @@ y_pred,std=gp.predict(x_test)
 ```
 
 The example creates a mapping z(x) where both x and z are 1d vectors using a neural network with 1 hidden layer.
-The CovMat layer creates a covariance matrix from z using the covariance function x\*exp(-0.5*|z1-z2|**2) with noise y where x and y are learned during training. 
+The CovMat layer creates a covariance matrix from z using the covariance function v\*exp(-0.5*|z1-z2|**2) with noise y where x and y are learned during training. 
 
 x and y are available after training as gp.layers[-1].var and gp.layers[-1].s_alpha.
 The gp.fast_forward() function can be used to extract the z(x) function (It skips the last layer that makes an array of size [batch_size, batch_size]).
@@ -71,20 +71,3 @@ DKL Prediction:
 </p>
 
 We see that DKL solves the problem quite nicely, given the limited data. We also see that for x<-0.5 the std.dev of the DKL model does not capture the prediction error.
-
-### Prediction error on MNIST
-
-The example_mnist.py script tries takes a crack at the classic MNIST classification problem (even though we currently are using a regression algorihm), to see if we are able to predict when we are making an error.
-Since no large-scale GP algorithms are implemented yet, we have to limit training data. We use mini-batch learning on the log marginal likelihood to find z(x). 
-Then fit a GP model on 5000 MNIST training samples. 
-
-Also, note that we are using regression on the labels. There is no support for real classification yet. However, despite these concerns, the results are decent.
-
-The following plots all the testing samples according to predicted std.error:
-
-<p align="center">
-<figure align="center">
-  
-  <img src="ex2_1.png" width="350"/> 
-  <figcaption>We seem to miss when the predicted std.dev is high.</figcaption>
-</p>
